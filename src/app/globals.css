@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-base: #E5E0D8;
+    --bg-primary: #748873;
+    --bg-alt: #D1A980;
+    --accent: #D1A980;
+    --accent-light: #E5E0D8;
+    --card-bg: #F8F8F8;
+    --text-primary: #324236;
+    --text-on-primary: #fff;
+    --border: #E5E0D8;
+    --danger: #FF4D4D;
+    --radius: 1rem;
+    --shadow: 0 4px 16px rgba(0,0,0,0.08);
+    --brand-shadow: 0 6px 20px rgba(0,0,0,0.10);
+  }
+
+  .dark {
+    --bg-base: #748873;
+    --bg-alt: #D1A980;
+    --bg-primary: #E5E0D8;
+    --accent: #D1A980;
+    --accent-light: #E5E0D8;
+    --card-bg: #F8F8F8;
+    --text-primary: #324236;
+    --text-on-primary: #fff;
+    --border: #E5E0D8;
+    --danger: #FF4D4D;
+    --shadow: 0 4px 16px rgba(0,0,0,0.10);
+    --brand-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  }
+}
+
+@layer base {
+  html {
+    font-family: 'Quicksand', Arial, sans-serif;
+    font-size: 17px;
+    background-color: var(--bg-base);  /* 헤더/전체 배경 */
+    letter-spacing: 0.01em;
+  }
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'Quicksand', Arial, sans-serif;
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  * {
+    box-sizing: border-box;
+    border-radius: var(--radius);
+  }
+  h1, .brand-title {
+    font-family: 'Quicksand', Arial, sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--bg-alt); /* Sand Beige */
+    letter-spacing: 0.02em;
+    margin-bottom: 0.7em;
+  }
+  h2, h3 {
+    font-family: 'Quicksand', Arial, sans-serif;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 0.5em;
+  }
+  a {
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--accent);
+  }
+  button {
+    background: var(--accent);
+    color: var(--text-on-primary);
+    box-shadow: var(--shadow);
+    font-family: 'Quicksand', Arial, sans-serif;
+  }
+  button:hover {
+    background: var(--accent-light);
+    color: var(--text-primary);
+  }
+  input, select, textarea {
+    border-radius: var(--radius);
+    font-family: 'Quicksand', Arial, sans-serif;
+    font-size: 1rem;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    transition: border 0.2s, background 0.2s;
+    padding: 0.7em 1em;
+  }
+  .card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 2rem 1.6rem;
+  }
+  .brand-shadow {
+    box-shadow: var(--brand-shadow);
+  }
+  .danger {
+    color: var(--danger);
+  }
+  .bg-base { background: var(--bg-base); }
+  .bg-alt { background: var(--bg-alt); }
+  .bg-primary { background: var(--bg-primary); }
+  .bg-accent { background: var(--accent); }
+  .bg-accent-light { background: var(--accent-light); }
+  .bg-card { background: var(--card-bg); }
+  .text-primary { color: var(--text-primary); }
+  .text-on-primary { color: var(--text-on-primary); }
+  .text-accent { color: var(--accent); }
+  .text-accent-light { color: var(--accent-light); }
+  .text-danger { color: var(--danger); }
+}
+/* 샌드색 배경용 커스텀 클래스 추가 */
+.bg-sand {
+  background-color: #E5E0D8 !important;
+}
+.fade-in {
+  animation: fadeIn 0.7s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

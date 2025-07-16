@@ -1,0 +1,207 @@
+import Image from "next/image";
+import Link from "next/link";
+
+export default function Home() {
+  return (
+    <main>
+      <section className="relative h-[500px] rounded-3xl overflow-hidden my-6 mx-2 md:mx-0">
+  <Image
+    src="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80" // 예시 강아지 이미지(원하시는 걸로 바꿔도 돼요!)
+    alt="Retro Puppy Banner"
+    fill
+    style={{ objectFit: "cover" }}
+    priority
+  />
+  <div className="absolute inset-0 bg-black/25 flex flex-col justify-center items-center text-center px-4">
+    <h1 className="text-4xl md:text-6xl font-bold mb-4 text-[#F2D0A4] drop-shadow-xl" style={{ fontFamily: 'Montserrat, Playfair Display, sans-serif' }}>
+      Bright Styles, Retro Vibes!
+    </h1>
+    <p className="text-lg md:text-2xl mb-8 text-[#FBEEDB] drop-shadow" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+      Gear up your pup with neon classics &amp; stand out in style.
+    </p>
+    <Link href="/collections/all"
+      className="bg-[#F2D0A4] text-[#274B4D] font-bold py-3 px-8 rounded-full shadow hover:bg-[#f6e2c3] transition duration-300"
+      style={{ fontFamily: 'Montserrat, sans-serif' }}>
+      Explore Collection
+    </Link>
+  </div>
+</section>
+
+      <section className="py-12">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-8">Shop Our Collection</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {[
+              { name: "Happy Place Reversible Bandana", price: "$39.00 USD", image: "https://ext.same-assets.com/1667191207/2069186592.jpeg", href: "/products/happy-place-reversible-bandana" },
+              { name: "Happy Place Womens T-shirt - Bandana Bundle", price: "$89.00 USD", image: "https://ext.same-assets.com/1667191207/3569243583.jpeg", href: "/products/happy-place-womens-t-shirt-bandana-bundle" },
+              { name: "Sunshine Club Reversible Bandana", price: "$39.00 USD", image: "https://ext.same-assets.com/1667191207/3395452387.jpeg", href: "/products/sunshine-club-reversible-bandana" },
+              { name: "Sunshine Club Womens T-shirt - Bandana Bundle", price: "$89.00 USD", image: "https://ext.same-assets.com/1667191207/3395452387.jpeg", href: "/products/sunshine-club-womens-t-shirt-bandana-bundle" },
+              { name: "Coffee & Cuddles Reversible Bandana", price: "$39.00 USD", image: "https://ext.same-assets.com/1667191207/1996840431.jpeg", href: "/products/coffee-cuddles-reversible-bandana" },
+              { name: "Coffee & Cuddless Womens T-shirt - Bandana Bundle", price: "$89.00 USD", image: "https://ext.same-assets.com/1667191207/1996840431.jpeg", href: "/products/coffee-cuddless-womens-t-shirt-bandana-bundle" },
+              { name: "Happy Place T-Shirt", price: "$59.00 USD", image: "https://ext.same-assets.com/1667191207/246136332.jpeg", href: "/products/happy-place-t-shirt" },
+              { name: "Sunshine Club T-Shirt", price: "$59.00 USD", image: "https://ext.same-assets.com/1667191207/3202248317.jpeg", href: "/products/sunshine-club-t-shirt" },
+            ].map((product, index) => (
+              <Link href={product.href} key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <Image src={product.image} alt={product.name} width={533} height={533} />
+                <div className="p-4">
+                  <h3 className="font-bold text-lg mb-2">{product.name}</h3>
+                  <p className="text-gray-600">{product.price}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-gray-100 py-12">
+        <div className="bg-[#F8F8F8] rounded-3xl shadow-md p-8 my-12 mx-auto max-w-3xl text-center">
+         <h2 className="text-3xl md:text-4xl font-bold text-[#D1A980] mb-4">
+          Our Mission
+         </h2>
+        <p className="text-lg md:text-xl text-[#748873] mb-2 font-semibold">
+          To bring warmth, personality, and handcrafted love into every dog's life.
+        </p>
+        <p className="text-base md:text-lg text-gray-700">
+          At HelloLoveDani, we believe that every pup is special.  
+          That's why each accessory is carefully handmade with passion and attention to detail—  
+          so your best friend can shine in their own unique way.
+        <br/><br/>
+           We value comfort, quality, and creativity,  
+           and hope to spread happiness, one wagging tail at a time!
+         </p>
+         <p className="mt-6 font-bold text-[#D1A980]">
+           – The HelloLoveDani Team
+         </p>
+        </div>
+      </section>
+
+      <section className="py-12">
+  <div className="container mx-auto px-4">
+    <h2 className="text-3xl font-bold text-center mb-8">Shop our best sellers!</h2>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+      {/* 반다나 */}
+      <Link href="/collections/bandana" className="relative group">
+        <Image
+          src="https://ext.same-assets.com/1667191207/2069186592.jpeg"
+          alt="Bandana"
+          width={400}
+          height={400}
+          className="rounded-lg group-hover:scale-105 transition"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-25 flex justify-center items-center">
+          <h3 className="text-white text-2xl font-bold">Bandana</h3>
+        </div>
+      </Link>
+      {/* 리본 타이 */}
+      <Link href="/collections/ribbon-tie" className="relative group">
+        <Image
+          src="https://ext.same-assets.com/1667191207/4094797300.jpeg"
+          alt="Ribbon Tie"
+          width={400}
+          height={400}
+          className="rounded-lg group-hover:scale-105 transition"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-25 flex justify-center items-center">
+          <h3 className="text-white text-2xl font-bold">Ribbon Tie</h3>
+        </div>
+      </Link>
+      {/* 워크 세트 */}
+      <Link href="/collections/walk-set" className="relative group">
+        <Image
+          src="https://ext.same-assets.com/1667191207/3124710205.jpeg"
+          alt="Walk Set"
+          width={400}
+          height={400}
+          className="rounded-lg group-hover:scale-105 transition"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-25 flex justify-center items-center">
+          <h3 className="text-white text-2xl font-bold">Walk Set</h3>
+        </div>
+      </Link>
+      {/* 커밍순 (COMING SOON) */}
+      <div className="relative group rounded-lg overflow-hidden">
+        <Image
+          src="https://images.unsplash.com/photo-1508672019048-805c876b67e2?auto=format&fit=crop&w=400&q=80"
+          alt="Coming Soon"
+          width={400}
+          height={400}
+          className="rounded-lg opacity-60 group-hover:scale-105 transition"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <h3 className="text-white text-2xl font-bold">COMING SOON</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{/* Customer Reviews Section */}
+<section className="bg-[#f8f8f8] py-12">
+  <div className="max-w-6xl mx-auto px-4 text-center">
+    {/* Stars */}
+    <div className="flex justify-center mb-4">
+      {[...Array(5)].map((_, i) => (
+        <svg key={i} width={28} height={28} fill="#d1a980" className="mx-1" viewBox="0 0 20 20">
+          <path d="M10 15l-5.878 3.09 1.123-6.545L.49 6.91l6.568-.955L10 0l2.942 5.955 6.568.955-4.755 4.635 1.123 6.545z" />
+        </svg>
+      ))}
+    </div>
+    <h2 className="text-4xl font-serif font-semibold mb-2 text-[#4a5c47]">What Our Customers Say</h2>
+    <p className="mb-10 text-lg text-gray-500">
+      5-star reviews from dog lovers across Australia.<br/>
+      See how HelloLoveDani makes every day more special!
+    </p>
+    <div className="grid md:grid-cols-3 gap-8">
+      <div>
+        <p className="text-gray-600 mb-6">
+          “Absolutely love these bandanas! The embroidery is beautiful and the fabric feels premium. My pup gets compliments every time we go for a walk.”
+        </p>
+        <span className="font-bold text-[#4a5c47]">Jessica L. · Sydney</span>
+      </div>
+      <div>
+        <p className="text-gray-600 mb-6">
+          “My dog usually hates wearing collars, but the harness from HelloLoveDani is so comfy he actually gets excited when I pull it out. Super cute design too!”
+        </p>
+        <span className="font-bold text-[#4a5c47]">Ben W. · Melbourne</span>
+      </div>
+      <div>
+        <p className="text-gray-600 mb-6">
+          “Fast shipping, lovely packaging, and the quality is even better than expected. I got a custom order for my friend’s dog and she loved it. Highly recommend!”
+        </p>
+        <span className="font-bold text-[#4a5c47]">Emma P. · Brisbane</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+      <section className="py-12 bg-gray-100">
+  <div className="container mx-auto px-4 flex flex-col items-center">
+    <h2 className="text-3xl font-bold text-center mb-8 text-[#175943]">Instagram with HelloLoveDani</h2>
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+      {[
+        "/insta1.png",
+        "/insta2.png",
+        "/insta3.png",
+        "/insta4.png",
+        "/insta5.png",
+        "/insta6.png",
+      ].map((src, idx) => (
+        <a href="https://instagram.com/hellolovedani" target="_blank" rel="noopener noreferrer" key={idx}>
+          <img src={src} alt={`Instagram photo ${idx+1}`} className="rounded-lg shadow hover:scale-105 transition" />
+        </a>
+      ))}
+    </div>
+    <a href="https://instagram.com/hellolovedani" target="_blank" rel="noopener noreferrer"
+       className="inline-flex items-center gap-2 px-6 py-3 bg-[#FFD600] text-[#175943] font-semibold rounded-full shadow hover:bg-[#FFE082] transition text-lg">
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <rect width="20" height="20" x="2" y="2" rx="6" strokeWidth="2"/>
+        <circle cx="12" cy="12" r="5" strokeWidth="2"/>
+        <circle cx="18" cy="6" r="1.5" strokeWidth="2"/>
+      </svg>
+      @hellolovedani
+    </a>
+  </div>
+</section>
+    </main>
+  );
+}
