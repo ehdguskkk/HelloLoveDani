@@ -34,7 +34,7 @@ type Product = {
 };
 
 // 🔥 카테고리 타입
-type Category = { id?: string; label: string; value: string };
+type Category = { id?: string; label: string; value: string; image?: string };
 
 // 🔥 배너 타입
 type Banner = { id?: string; image: string; link: string; title: string; order: number; visible: boolean };
@@ -340,12 +340,17 @@ function ProductAdmin() {
   );
 }
 
-// ----------- 2. 카테고리 관리 -----------
+// ----------- 2. 카테고리 관리 (이미지 업로드 + URL) -----------
 function CategoryAdmin() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [newLabel, setNewLabel] = useState('');
   const [newValue, setNewValue] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
+
+  // 이미지 업로드/URL 입력 상태
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUrlInput, setImageUrlInput] = useState('');
+  const [previewImage, setPreviewImage] = useState<string>("");
 
   // 카테고리 불러오기
   const fetchCategories = async () => {
@@ -354,20 +359,58 @@ function CategoryAdmin() {
   };
   useEffect(() => { fetchCategories(); }, []);
 
+  // 파일 업로드 핸들러 (Firebase Storage)
+  const handleImageFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setPreviewImage(URL.createObjectURL(file));
+    setImageUrlInput(""); // 파일 업로드 우선시
+  };
+
+  // URL 입력시 미리보기
+  useEffect(() => {
+    if (imageUrlInput) setPreviewImage(imageUrlInput);
+    else if (!imageFile) setPreviewImage(""); // 이미지 둘 다 없으면 미리보기 제거
+  }, [imageUrlInput]);
+
+  // 이미지 업로드 → Firebase Storage
+  const uploadCategoryImage = async () => {
+    if (!imageFile) return ""; // 파일 없으면 빈값
+    const storageRef = ref(storage, `categoryImages/${Date.now()}_${imageFile.name}`);
+    await uploadBytes(storageRef, imageFile);
+    const url = await getDownloadURL(storageRef);
+    return url;
+  };
+
+  // 추가/수정
   const handleAddOrUpdate = async () => {
     if (!newLabel || !newValue) return alert('카테고리명, 슬러그 모두 입력!');
+    let finalImage = imageUrlInput;
+    if (imageFile) finalImage = await uploadCategoryImage();
+
+    const data: Category = { label: newLabel, value: newValue, image: finalImage };
     if (editId) {
-      await updateDoc(doc(db, "categories", editId), { label: newLabel, value: newValue });
+      await updateDoc(doc(db, "categories", editId), data);
       setEditId(null);
     } else {
-      await addDoc(collection(db, "categories"), { label: newLabel, value: newValue });
+      await addDoc(collection(db, "categories"), data);
     }
-    setNewLabel(''); setNewValue('');
+    setNewLabel(''); setNewValue(''); setImageFile(null); setImageUrlInput(''); setPreviewImage('');
     fetchCategories();
   };
+
+  // 수정
   const handleEdit = (cat: Category) => {
-    setEditId(cat.id || null); setNewLabel(cat.label); setNewValue(cat.value);
+    setEditId(cat.id || null);
+    setNewLabel(cat.label);
+    setNewValue(cat.value);
+    setImageFile(null);
+    setImageUrlInput(cat.image || "");
+    setPreviewImage(cat.image || "");
   };
+
+  // 삭제
   const handleDelete = async (id: string | undefined) => {
     if (!id) return;
     if (!window.confirm('정말 삭제할까요?')) return;
@@ -378,16 +421,36 @@ function CategoryAdmin() {
   return (
     <div className="border p-4 rounded mb-10 max-w-xl">
       <h2 className="font-bold mb-2">카테고리 관리</h2>
-      <div className="flex gap-2 mb-2">
+      <div className="flex gap-2 mb-2 flex-wrap items-center">
         <input value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="카테고리명(한글/영문)" className="border p-2" />
         <input value={newValue} onChange={e => setNewValue(e.target.value)} placeholder="슬러그(bandanas)" className="border p-2" />
+
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageFileChange}
+          className="border p-2 w-40"
+        />
+        <input
+          type="text"
+          value={imageUrlInput}
+          onChange={e => { setImageUrlInput(e.target.value); setImageFile(null); }}
+          placeholder="이미지 URL 직접입력"
+          className="border p-2 w-56"
+        />
+        {previewImage && (
+          <img src={previewImage} alt="카테고리 미리보기" className="w-12 h-12 object-cover rounded" />
+        )}
         <button onClick={handleAddOrUpdate} className="bg-blue-400 px-2 rounded text-white">{editId ? "수정" : "추가"}</button>
-        {editId && <button onClick={() => { setEditId(null); setNewLabel(''); setNewValue(''); }} className="bg-gray-300 px-2 rounded">취소</button>}
+        {editId && <button onClick={() => { setEditId(null); setNewLabel(''); setNewValue(''); setImageFile(null); setImageUrlInput(''); setPreviewImage(''); }} className="bg-gray-300 px-2 rounded">취소</button>}
       </div>
       <ul>
         {categories.map(cat => (
           <li key={cat.id} className="mb-1 flex items-center justify-between border-b pb-1">
-            <span>
+            <span className="flex items-center gap-2">
+              {cat.image && (
+                <img src={cat.image} alt="카테고리" className="w-8 h-8 object-cover rounded" />
+              )}
               <b>{cat.label}</b> (<code>{cat.value}</code>)
             </span>
             <div className="flex gap-1">

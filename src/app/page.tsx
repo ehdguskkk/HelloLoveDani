@@ -14,28 +14,18 @@ type Product = {
   [key: string]: any;
 };
 
-// ✅ 카테고리 정보 통합 관리
-const CATEGORIES = [
-  {
-    label: "Bandana",
-    value: "bandanas", // slug (복수형, 소문자)
-    image: "https://ext.same-assets.com/1667191207/2069186592.jpeg",
-  },
-  {
-    label: "Ribbon Tie",
-    value: "ribbon-ties", // slug (복수형, 소문자, 하이픈)
-    image: "https://ext.same-assets.com/1667191207/4094797300.jpeg",
-  },
-  {
-    label: "Walk Set",
-    value: "walk-set", // slug (소문자, 하이픈)
-    image: "https://ext.same-assets.com/1667191207/3124710205.jpeg",
-  },
-];
+type Category = {
+  id?: string;
+  label: string;
+  value: string;
+  image?: string; // Firestore에서 관리
+};
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
+  // 상품 불러오기
   useEffect(() => {
     async function fetchProducts() {
       const snapshot = await getDocs(collection(db, "products"));
@@ -47,6 +37,20 @@ export default function Home() {
       );
     }
     fetchProducts();
+  }, []);
+
+  // 🔥 카테고리 Firestore에서 실시간 불러오기!
+  useEffect(() => {
+    async function fetchCategories() {
+      const snapshot = await getDocs(collection(db, "categories"));
+      setCategories(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Category),
+        }))
+      );
+    }
+    fetchCategories();
   }, []);
 
   return (
@@ -106,25 +110,29 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 카테고리별 쇼핑 섹션 (슬러그 통일!) */}
+      {/* 카테고리별 쇼핑 섹션 (Firestore의 최신값으로 렌더링) */}
       <section className="py-12">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-8">Shop our best sellers!</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-            {CATEGORIES.map(cat => (
-              <Link href={`/collections/${cat.value}`} className="relative group" key={cat.value}>
-                <Image
-                  src={cat.image}
-                  alt={cat.label}
-                  width={400}
-                  height={400}
-                  className="rounded-lg group-hover:scale-105 transition"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-25 flex justify-center items-center">
-                  <h3 className="text-white text-2xl font-bold">{cat.label}</h3>
-                </div>
-              </Link>
-            ))}
+            {categories.length === 0 ? (
+              <div className="col-span-4 text-center text-gray-500">No categories found.</div>
+            ) : (
+              categories.map(cat => (
+                <Link href={`/collections/${cat.value}`} className="relative group" key={cat.value}>
+                  <Image
+                    src={cat.image || "/default-image.png"}
+                    alt={cat.label}
+                    width={400}
+                    height={400}
+                    className="rounded-lg group-hover:scale-105 transition"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-25 flex justify-center items-center">
+                    <h3 className="text-white text-2xl font-bold">{cat.label}</h3>
+                  </div>
+                </Link>
+              ))
+            )}
             {/* Coming Soon */}
             <div className="relative group rounded-lg overflow-hidden">
               <Image
@@ -142,73 +150,74 @@ export default function Home() {
         </div>
       </section>
 
-{/* Customer Reviews Section */}
-<section className="bg-[#f8f8f8] py-12">
-  <div className="max-w-6xl mx-auto px-4 text-center">
-    {/* Stars */}
-    <div className="flex justify-center mb-4">
-      {[...Array(5)].map((_, i) => (
-        <svg key={i} width={28} height={28} fill="#d1a980" className="mx-1" viewBox="0 0 20 20">
-          <path d="M10 15l-5.878 3.09 1.123-6.545L.49 6.91l6.568-.955L10 0l2.942 5.955 6.568.955-4.755 4.635 1.123 6.545z" />
-        </svg>
-      ))}
-    </div>
-    <h2 className="text-4xl font-serif font-semibold mb-2 text-[#4a5c47]">What Our Customers Say</h2>
-    <p className="mb-10 text-lg text-gray-500">
-      5-star reviews from dog lovers across Australia.<br/>
-      See how HelloLoveDani makes every day more special!
-    </p>
-    <div className="grid md:grid-cols-3 gap-8">
-      <div>
-        <p className="text-gray-600 mb-6">
-          “Absolutely love these bandanas! The embroidery is beautiful and the fabric feels premium. My pup gets compliments every time we go for a walk.”
-        </p>
-        <span className="font-bold text-[#4a5c47]">Jessica L. · Sydney</span>
-      </div>
-      <div>
-        <p className="text-gray-600 mb-6">
-          “My dog usually hates wearing collars, but the harness from HelloLoveDani is so comfy he actually gets excited when I pull it out. Super cute design too!”
-        </p>
-        <span className="font-bold text-[#4a5c47]">Ben W. · Melbourne</span>
-      </div>
-      <div>
-        <p className="text-gray-600 mb-6">
-          “Fast shipping, lovely packaging, and the quality is even better than expected. I got a custom order for my friend’s dog and she loved it. Highly recommend!”
-        </p>
-        <span className="font-bold text-[#4a5c47]">Emma P. · Brisbane</span>
-      </div>
-    </div>
-  </div>
-</section>
+      {/* Customer Reviews Section */}
+      <section className="bg-[#f8f8f8] py-12">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          {/* Stars */}
+          <div className="flex justify-center mb-4">
+            {[...Array(5)].map((_, i) => (
+              <svg key={i} width={28} height={28} fill="#d1a980" className="mx-1" viewBox="0 0 20 20">
+                <path d="M10 15l-5.878 3.09 1.123-6.545L.49 6.91l6.568-.955L10 0l2.942 5.955 6.568.955-4.755 4.635 1.123 6.545z" />
+              </svg>
+            ))}
+          </div>
+          <h2 className="text-4xl font-serif font-semibold mb-2 text-[#4a5c47]">What Our Customers Say</h2>
+          <p className="mb-10 text-lg text-gray-500">
+            5-star reviews from dog lovers across Australia.<br />
+            See how HelloLoveDani makes every day more special!
+          </p>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div>
+              <p className="text-gray-600 mb-6">
+                “Absolutely love these bandanas! The embroidery is beautiful and the fabric feels premium. My pup gets compliments every time we go for a walk.”
+              </p>
+              <span className="font-bold text-[#4a5c47]">Jessica L. · Sydney</span>
+            </div>
+            <div>
+              <p className="text-gray-600 mb-6">
+                “My dog usually hates wearing collars, but the harness from HelloLoveDani is so comfy he actually gets excited when I pull it out. Super cute design too!”
+              </p>
+              <span className="font-bold text-[#4a5c47]">Ben W. · Melbourne</span>
+            </div>
+            <div>
+              <p className="text-gray-600 mb-6">
+                “Fast shipping, lovely packaging, and the quality is even better than expected. I got a custom order for my friend’s dog and she loved it. Highly recommend!”
+              </p>
+              <span className="font-bold text-[#4a5c47]">Emma P. · Brisbane</span>
+            </div>
+          </div>
+        </div>
+      </section>
 
+      {/* 인스타그램 */}
       <section className="py-12 bg-gray-100">
-  <div className="container mx-auto px-4 flex flex-col items-center">
-    <h2 className="text-3xl font-bold text-center mb-8 text-[#175943]">Instagram with HelloLoveDani</h2>
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-      {[
-        "/insta1.png",
-        "/insta2.png",
-        "/insta3.png",
-        "/insta4.png",
-        "/insta5.png",
-        "/insta6.png",
-      ].map((src, idx) => (
-        <a href="https://instagram.com/hellolovedani" target="_blank" rel="noopener noreferrer" key={idx}>
-          <img src={src} alt={`Instagram photo ${idx+1}`} className="rounded-lg shadow hover:scale-105 transition" />
-        </a>
-      ))}
-    </div>
-    <a href="https://instagram.com/hellolovedani" target="_blank" rel="noopener noreferrer"
-       className="inline-flex items-center gap-2 px-6 py-3 bg-[#FFD600] text-[#175943] font-semibold rounded-full shadow hover:bg-[#FFE082] transition text-lg">
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <rect width="20" height="20" x="2" y="2" rx="6" strokeWidth="2"/>
-        <circle cx="12" cy="12" r="5" strokeWidth="2"/>
-        <circle cx="18" cy="6" r="1.5" strokeWidth="2"/>
-      </svg>
-      @hellolovedani
-    </a>
-  </div>
-</section>
+        <div className="container mx-auto px-4 flex flex-col items-center">
+          <h2 className="text-3xl font-bold text-center mb-8 text-[#175943]">Instagram with HelloLoveDani</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            {[
+              "/insta1.png",
+              "/insta2.png",
+              "/insta3.png",
+              "/insta4.png",
+              "/insta5.png",
+              "/insta6.png",
+            ].map((src, idx) => (
+              <a href="https://instagram.com/hellolovedani" target="_blank" rel="noopener noreferrer" key={idx}>
+                <img src={src} alt={`Instagram photo ${idx + 1}`} className="rounded-lg shadow hover:scale-105 transition" />
+              </a>
+            ))}
+          </div>
+          <a href="https://instagram.com/hellolovedani" target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#FFD600] text-[#175943] font-semibold rounded-full shadow hover:bg-[#FFE082] transition text-lg">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <rect width="20" height="20" x="2" y="2" rx="6" strokeWidth="2" />
+              <circle cx="12" cy="12" r="5" strokeWidth="2" />
+              <circle cx="18" cy="6" r="1.5" strokeWidth="2" />
+            </svg>
+            @hellolovedani
+          </a>
+        </div>
+      </section>
     </main>
   );
 }
