@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, ChangeEvent } from 'react';
 import { auth, db, storage } from '@/firebase';
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -15,18 +15,38 @@ const CATEGORY_OPTIONS = [
   { label: "Walk Set", value: "walk-set" },
 ];
 
-// 🔥 배너용 기본 구조
+// 🔥 상품 타입
+type ProductOption = { color?: string; size?: string; stock?: number | string };
+type Product = {
+  id?: string;
+  name: string;
+  image?: string;
+  price: number;
+  category: string;
+  description?: string;
+  options?: ProductOption[];
+  stock?: number;
+  origin?: string;
+  size?: string;
+  color?: string;
+  detail?: string;
+  visible?: boolean;
+};
+
+// 🔥 카테고리 타입
+type Category = { id?: string; label: string; value: string };
+
+// 🔥 배너 타입
 type Banner = { id?: string; image: string; link: string; title: string; order: number; visible: boolean };
 // 주문
-type Order = { id: string; products: any[]; total: number; user: string; status: string; createdAt: string };
+type Order = { id: string; products: Product[]; total: number; user: string; status: string; createdAt: string };
 // 리뷰
 type Review = { id: string; productId: string; user: string; rating: number; title: string; content: string; createdAt: string };
 // QnA
 type Qna = { id: string; productId: string; user: string; question: string; answer?: string; createdAt: string };
 
-// ----------- 어드민 메인 -----------
 export default function AdminPage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [tab, setTab] = useState<'product'|'category'|'banner'|'order'|'review'|'qna'>('product');
 
   useEffect(() => {
@@ -76,7 +96,7 @@ export default function AdminPage() {
   );
 }
 
-// ----------- 1. 상품 관리(검색/진열/미리보기/옵션/복제/일괄등록/상세/정렬) -----------
+// ----------- 1. 상품 관리 -----------
 function ProductAdmin() {
   const [name, setName] = useState('');
   const [image, setImage] = useState('');
@@ -84,12 +104,12 @@ function ProductAdmin() {
   const [category, setCategory] = useState('');
   const [desc, setDesc] = useState('');
   const [file, setFile] = useState<File | null>(null);
-  const [options, setOptions] = useState<any[]>([]);
-  const [optionInput, setOptionInput] = useState({ color: '', size: '', stock: '' });
+  const [options, setOptions] = useState<ProductOption[]>([]);
+  const [optionInput, setOptionInput] = useState<ProductOption>({ color: '', size: '', stock: '' });
   const [stock, setStock] = useState<number | ''>('');
   const [origin, setOrigin] = useState('');
   const [detail, setDetail] = useState('');
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [editId, setEditId] = useState<string | null>(null);
 
   // --- 검색/필터 ---
@@ -97,12 +117,12 @@ function ProductAdmin() {
   const [filterCategory, setFilterCategory] = useState('');
 
   // --- 일괄 업로드 ---
-  const [csvProducts, setCsvProducts] = useState<any[]>([]);
+  const [csvProducts, setCsvProducts] = useState<Product[]>([]);
 
   // 상품 목록 불러오기
   const fetchProducts = async () => {
     const snapshot = await getDocs(collection(db, 'products'));
-    setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
   };
   useEffect(() => { fetchProducts(); }, []);
 
@@ -132,7 +152,7 @@ function ProductAdmin() {
     let imageUrl = image;
     if (file) imageUrl = await uploadImage();
 
-    const data = {
+    const data: Product = {
       name, price: Number(price), category, description: desc, image: imageUrl,
       options, stock: stock === '' ? 0 : Number(stock), origin, detail, visible: true
     };
@@ -153,8 +173,8 @@ function ProductAdmin() {
   };
 
   // 수정/복제
-  const handleEdit = (product: any, isCopy = false) => {
-    setEditId(isCopy ? null : product.id);
+  const handleEdit = (product: Product, isCopy = false) => {
+    setEditId(isCopy ? null : product.id || null);
     setName(product.name || '');
     setImage(product.image || '');
     setPrice(product.price || '');
@@ -169,13 +189,15 @@ function ProductAdmin() {
   };
 
   // 진열/비진열
-  const toggleVisible = async (id: string, visible: boolean) => {
+  const toggleVisible = async (id: string | undefined, visible: boolean) => {
+    if (!id) return;
     await updateDoc(doc(db, "products", id), { visible });
     fetchProducts();
   };
 
   // 삭제
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string | undefined) => {
+    if (!id) return;
     if (!window.confirm('정말 삭제할까요?')) return;
     await deleteDoc(doc(db, "products", id));
     fetchProducts();
@@ -189,8 +211,7 @@ function ProductAdmin() {
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
       const rows = text.split('\n').map(r => r.split(','));
-      // columns: name, price, category, desc, image, stock, origin, detail
-      const newProducts = rows.slice(1).map(row => ({
+      const newProducts: Product[] = rows.slice(1).map(row => ({
         name: row[0], price: Number(row[1]), category: row[2], description: row[3], image: row[4], stock: Number(row[5]), origin: row[6], detail: row[7], visible: true
       }));
       setCsvProducts(newProducts);
@@ -239,9 +260,9 @@ function ProductAdmin() {
       </div>
       {/* 옵션 복수 입력 */}
       <div className="mb-2 flex gap-2">
-        <input value={optionInput.color} onChange={e => setOptionInput(o => ({ ...o, color: e.target.value }))} placeholder="색상" className="border p-2 w-20" />
-        <input value={optionInput.size} onChange={e => setOptionInput(o => ({ ...o, size: e.target.value }))} placeholder="사이즈" className="border p-2 w-20" />
-        <input value={optionInput.stock} onChange={e => setOptionInput(o => ({ ...o, stock: e.target.value }))} placeholder="옵션 재고" className="border p-2 w-20" />
+        <input value={optionInput.color as string} onChange={e => setOptionInput(o => ({ ...o, color: e.target.value }))} placeholder="색상" className="border p-2 w-20" />
+        <input value={optionInput.size as string} onChange={e => setOptionInput(o => ({ ...o, size: e.target.value }))} placeholder="사이즈" className="border p-2 w-20" />
+        <input value={optionInput.stock as string} onChange={e => setOptionInput(o => ({ ...o, stock: e.target.value }))} placeholder="옵션 재고" className="border p-2 w-20" />
         <button onClick={handleAddOption} className="bg-gray-300 px-2 py-1 rounded">+ 옵션추가</button>
       </div>
       <ul className="mb-2 flex gap-2 flex-wrap">
@@ -282,7 +303,7 @@ function ProductAdmin() {
             <span>
               <b>{product.name}</b> ({product.category}) - ${product.price}
               {product.options && product.options.length > 0 &&
-                product.options.map((opt: any, i: number) => (
+                product.options.map((opt, i) => (
                   <span key={i} className="ml-2 text-xs bg-gray-200 px-1 rounded">
                     {opt.color}/{opt.size} 재고:{opt.stock}
                   </span>
@@ -321,7 +342,7 @@ function ProductAdmin() {
 
 // ----------- 2. 카테고리 관리 -----------
 function CategoryAdmin() {
-  const [categories, setCategories] = useState<{ id?: string; label: string; value: string }[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [newLabel, setNewLabel] = useState('');
   const [newValue, setNewValue] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
@@ -329,7 +350,7 @@ function CategoryAdmin() {
   // 카테고리 불러오기
   const fetchCategories = async () => {
     const snap = await getDocs(collection(db, "categories"));
-    setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as any)));
+    setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as Category)));
   };
   useEffect(() => { fetchCategories(); }, []);
 
@@ -344,10 +365,11 @@ function CategoryAdmin() {
     setNewLabel(''); setNewValue('');
     fetchCategories();
   };
-  const handleEdit = (cat: any) => {
-    setEditId(cat.id); setNewLabel(cat.label); setNewValue(cat.value);
+  const handleEdit = (cat: Category) => {
+    setEditId(cat.id || null); setNewLabel(cat.label); setNewValue(cat.value);
   };
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string | undefined) => {
+    if (!id) return;
     if (!window.confirm('정말 삭제할까요?')) return;
     await deleteDoc(doc(db, "categories", id));
     fetchCategories();
@@ -370,7 +392,7 @@ function CategoryAdmin() {
             </span>
             <div className="flex gap-1">
               <button onClick={() => handleEdit(cat)} className="text-blue-500">수정</button>
-              <button onClick={() => handleDelete(cat.id!)} className="text-red-500">삭제</button>
+              <button onClick={() => handleDelete(cat.id)} className="text-red-500">삭제</button>
             </div>
           </li>
         ))}
@@ -407,7 +429,8 @@ function BannerAdmin() {
     setEditId(b.id!);
     setBanner({ ...b });
   };
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string | undefined) => {
+    if (!id) return;
     if (!window.confirm('정말 삭제?')) return;
     await deleteDoc(doc(db, "banners", id));
     fetchBanners();
@@ -437,7 +460,7 @@ function BannerAdmin() {
             </span>
             <div className="flex gap-1">
               <button onClick={() => handleEdit(b)} className="text-blue-500">수정</button>
-              <button onClick={() => handleDelete(b.id!)} className="text-red-500">삭제</button>
+              <button onClick={() => handleDelete(b.id)} className="text-red-500">삭제</button>
             </div>
           </li>
         ))}
@@ -461,7 +484,7 @@ function OrderAdmin() {
         {orders.map(o => (
           <li key={o.id} className="mb-1 border-b pb-1">
             <div>주문자: {o.user} | 금액: ${o.total} | 상태: {o.status} | {o.createdAt}</div>
-            <div>상품: {o.products?.map((p, i) => <span key={i}>{p.name}({p.qty}) </span>)}</div>
+            <div>상품: {o.products?.map((p, i) => <span key={i}>{(p as Product).name}({(p as any).qty}) </span>)}</div>
           </li>
         ))}
       </ul>

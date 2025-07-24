@@ -1,15 +1,24 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { auth } from '@/firebase';
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
 import { db } from '@/firebase';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 const ADMIN_EMAIL = "sae4762@gmail.com"; // 관리자 이메일만 접근 가능
 
+// 🔥 상품 타입 선언
+type Product = {
+  id: string;
+  name: string;
+  image?: string;
+  price: number;
+  category: string;
+};
+
 export default function AdminPage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
 
   useEffect(() => {
     // 로그인 상태 감지
@@ -56,13 +65,16 @@ function ProductAdmin() {
   const [image, setImage] = useState('');
   const [price, setPrice] = useState<number | ''>('');
   const [category, setCategory] = useState('');
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
 
   // 상품 목록 불러오기
   useEffect(() => {
     async function fetchProducts() {
       const snapshot = await getDocs(collection(db, 'products'));
-      setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setProducts(snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Product, "id">)
+      })));
     }
     fetchProducts();
   }, []);
@@ -79,7 +91,10 @@ function ProductAdmin() {
     setName(''); setImage(''); setPrice(''); setCategory('');
     // 새로고침
     const snapshot = await getDocs(collection(db, 'products'));
-    setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    setProducts(snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Product, "id">)
+    })));
   };
 
   // 상품 삭제
