@@ -13,11 +13,11 @@ const Sidebar = ({ isOpen, closeSidebar }: SidebarProps) => {
   const [isShopOpen, setShopOpen] = useState(false);
 
   const shopCategories = [
-    { name: 'Bandanas', href: '/collections/bandanas' },
-    { name: 'Ribbon Ties', href: '/collections/Ribbon Ties' },
-    { name: 'Walk Set', href: '/collections/Walk Set' },
-    { name: 'Coming Soon', href: '/collections/Coming Soon' },
-  ];
+  { name: 'Bandanas', href: '/collections/bandanas' },
+  { name: 'Ribbon Ties', href: '/collections/ribbon-ties' },   // ← 슬러그로!
+  { name: 'Walk Set', href: '/collections/walk-set' },         // ← 슬러그로!
+  { name: 'Coming Soon', href: '/collections/coming-soon' },
+];
 
   return (
     <div className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-50 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out`}>

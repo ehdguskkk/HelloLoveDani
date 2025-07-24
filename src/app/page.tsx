@@ -1,139 +1,146 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { db } from "@/firebase";
+import { collection, getDocs } from "firebase/firestore";
+
+type Product = {
+  id: string;
+  name: string;
+  image?: string;
+  price?: number;
+  [key: string]: any;
+};
+
+// ✅ 카테고리 정보 통합 관리
+const CATEGORIES = [
+  {
+    label: "Bandana",
+    value: "bandanas", // slug (복수형, 소문자)
+    image: "https://ext.same-assets.com/1667191207/2069186592.jpeg",
+  },
+  {
+    label: "Ribbon Tie",
+    value: "ribbon-ties", // slug (복수형, 소문자, 하이픈)
+    image: "https://ext.same-assets.com/1667191207/4094797300.jpeg",
+  },
+  {
+    label: "Walk Set",
+    value: "walk-set", // slug (소문자, 하이픈)
+    image: "https://ext.same-assets.com/1667191207/3124710205.jpeg",
+  },
+];
 
 export default function Home() {
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      const snapshot = await getDocs(collection(db, "products"));
+      setProducts(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Product[]
+      );
+    }
+    fetchProducts();
+  }, []);
+
   return (
     <main>
+      {/* 배너 */}
       <section className="relative h-[500px] rounded-3xl overflow-hidden my-6 mx-2 md:mx-0">
-  <Image
-    src="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80" // 예시 강아지 이미지(원하시는 걸로 바꿔도 돼요!)
-    alt="Retro Puppy Banner"
-    fill
-    style={{ objectFit: "cover" }}
-    priority
-  />
-  <div className="absolute inset-0 bg-black/25 flex flex-col justify-center items-center text-center px-4">
-    <h1 className="text-4xl md:text-6xl font-bold mb-4 text-[#F2D0A4] drop-shadow-xl" style={{ fontFamily: 'Montserrat, Playfair Display, sans-serif' }}>
-      Bright Styles, Retro Vibes!
-    </h1>
-    <p className="text-lg md:text-2xl mb-8 text-[#FBEEDB] drop-shadow" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-      Gear up your pup with neon classics &amp; stand out in style.
-    </p>
-    <Link href="/collections/all"
-      className="bg-[#F2D0A4] text-[#274B4D] font-bold py-3 px-8 rounded-full shadow hover:bg-[#f6e2c3] transition duration-300"
-      style={{ fontFamily: 'Montserrat, sans-serif' }}>
-      Explore Collection
-    </Link>
-  </div>
-</section>
+        <Image
+          src="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80"
+          alt="Retro Puppy Banner"
+          fill
+          style={{ objectFit: "cover" }}
+          priority
+        />
+        <div className="absolute inset-0 bg-black/25 flex flex-col justify-center items-center text-center px-4">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 text-[#F2D0A4] drop-shadow-xl" style={{ fontFamily: 'Montserrat, Playfair Display, sans-serif' }}>
+            Bright Styles, Retro Vibes!
+          </h1>
+          <p className="text-lg md:text-2xl mb-8 text-[#FBEEDB] drop-shadow" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            Gear up your pup with neon classics &amp; stand out in style.
+          </p>
+          <Link href="/collections/all"
+            className="bg-[#F2D0A4] text-[#274B4D] font-bold py-3 px-8 rounded-full shadow hover:bg-[#f6e2c3] transition duration-300"
+            style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            Explore Collection
+          </Link>
+        </div>
+      </section>
 
+      {/* 메인 상품 그리드 */}
       <section className="py-12">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-8">Shop Our Collection</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {[
-              { name: "Happy Place Reversible Bandana", price: "$39.00 USD", image: "https://ext.same-assets.com/1667191207/2069186592.jpeg", href: "/products/happy-place-reversible-bandana" },
-              { name: "Happy Place Womens T-shirt - Bandana Bundle", price: "$89.00 USD", image: "https://ext.same-assets.com/1667191207/3569243583.jpeg", href: "/products/happy-place-womens-t-shirt-bandana-bundle" },
-              { name: "Sunshine Club Reversible Bandana", price: "$39.00 USD", image: "https://ext.same-assets.com/1667191207/3395452387.jpeg", href: "/products/sunshine-club-reversible-bandana" },
-              { name: "Sunshine Club Womens T-shirt - Bandana Bundle", price: "$89.00 USD", image: "https://ext.same-assets.com/1667191207/3395452387.jpeg", href: "/products/sunshine-club-womens-t-shirt-bandana-bundle" },
-              { name: "Coffee & Cuddles Reversible Bandana", price: "$39.00 USD", image: "https://ext.same-assets.com/1667191207/1996840431.jpeg", href: "/products/coffee-cuddles-reversible-bandana" },
-              { name: "Coffee & Cuddless Womens T-shirt - Bandana Bundle", price: "$89.00 USD", image: "https://ext.same-assets.com/1667191207/1996840431.jpeg", href: "/products/coffee-cuddless-womens-t-shirt-bandana-bundle" },
-              { name: "Happy Place T-Shirt", price: "$59.00 USD", image: "https://ext.same-assets.com/1667191207/246136332.jpeg", href: "/products/happy-place-t-shirt" },
-              { name: "Sunshine Club T-Shirt", price: "$59.00 USD", image: "https://ext.same-assets.com/1667191207/3202248317.jpeg", href: "/products/sunshine-club-t-shirt" },
-            ].map((product, index) => (
-              <Link href={product.href} key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
-                <Image src={product.image} alt={product.name} width={533} height={533} />
-                <div className="p-4">
-                  <h3 className="font-bold text-lg mb-2">{product.name}</h3>
-                  <p className="text-gray-600">{product.price}</p>
-                </div>
-              </Link>
-            ))}
+            {products.length === 0 ? (
+              <div className="col-span-4 text-center text-gray-500">No products found.</div>
+            ) : (
+              products.map((product) => (
+                <Link
+                  key={product.id}
+                  href={`/products/${product.id}`}
+                  className="bg-white rounded-lg shadow-md overflow-hidden"
+                >
+                  <Image
+                    src={product.image || "/default-image.png"}
+                    alt={product.name}
+                    width={533}
+                    height={533}
+                  />
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg mb-2">{product.name}</h3>
+                    <p className="text-gray-600">{product.price ? `$${product.price}` : ""}</p>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
         </div>
       </section>
 
-      <section className="bg-gray-100 py-12">
-        <div className="bg-[#F8F8F8] rounded-3xl shadow-md p-8 my-12 mx-auto max-w-3xl text-center">
-         <h2 className="text-3xl md:text-4xl font-bold text-[#D1A980] mb-4">
-          Our Mission
-         </h2>
-        <p className="text-lg md:text-xl text-[#748873] mb-2 font-semibold">
-          To bring warmth, personality, and handcrafted love into every dog's life.
-        </p>
-        <p className="text-base md:text-lg text-gray-700">
-          At HelloLoveDani, we believe that every pup is special.  
-          That's why each accessory is carefully handmade with passion and attention to detail—  
-          so your best friend can shine in their own unique way.
-        <br/><br/>
-           We value comfort, quality, and creativity,  
-           and hope to spread happiness, one wagging tail at a time!
-         </p>
-         <p className="mt-6 font-bold text-[#D1A980]">
-           – The HelloLoveDani Team
-         </p>
+      {/* 카테고리별 쇼핑 섹션 (슬러그 통일!) */}
+      <section className="py-12">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-8">Shop our best sellers!</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+            {CATEGORIES.map(cat => (
+              <Link href={`/collections/${cat.value}`} className="relative group" key={cat.value}>
+                <Image
+                  src={cat.image}
+                  alt={cat.label}
+                  width={400}
+                  height={400}
+                  className="rounded-lg group-hover:scale-105 transition"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-25 flex justify-center items-center">
+                  <h3 className="text-white text-2xl font-bold">{cat.label}</h3>
+                </div>
+              </Link>
+            ))}
+            {/* Coming Soon */}
+            <div className="relative group rounded-lg overflow-hidden">
+              <Image
+                src="https://images.unsplash.com/photo-1508672019048-805c876b67e2?auto=format&fit=crop&w=400&q=80"
+                alt="Coming Soon"
+                width={400}
+                height={400}
+                className="rounded-lg opacity-60 group-hover:scale-105 transition"
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                <h3 className="text-white text-2xl font-bold">COMING SOON</h3>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
-
-      <section className="py-12">
-  <div className="container mx-auto px-4">
-    <h2 className="text-3xl font-bold text-center mb-8">Shop our best sellers!</h2>
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-      {/* 반다나 */}
-      <Link href="/collections/bandana" className="relative group">
-        <Image
-          src="https://ext.same-assets.com/1667191207/2069186592.jpeg"
-          alt="Bandana"
-          width={400}
-          height={400}
-          className="rounded-lg group-hover:scale-105 transition"
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-25 flex justify-center items-center">
-          <h3 className="text-white text-2xl font-bold">Bandana</h3>
-        </div>
-      </Link>
-      {/* 리본 타이 */}
-      <Link href="/collections/ribbon-tie" className="relative group">
-        <Image
-          src="https://ext.same-assets.com/1667191207/4094797300.jpeg"
-          alt="Ribbon Tie"
-          width={400}
-          height={400}
-          className="rounded-lg group-hover:scale-105 transition"
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-25 flex justify-center items-center">
-          <h3 className="text-white text-2xl font-bold">Ribbon Tie</h3>
-        </div>
-      </Link>
-      {/* 워크 세트 */}
-      <Link href="/collections/walk-set" className="relative group">
-        <Image
-          src="https://ext.same-assets.com/1667191207/3124710205.jpeg"
-          alt="Walk Set"
-          width={400}
-          height={400}
-          className="rounded-lg group-hover:scale-105 transition"
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-25 flex justify-center items-center">
-          <h3 className="text-white text-2xl font-bold">Walk Set</h3>
-        </div>
-      </Link>
-      {/* 커밍순 (COMING SOON) */}
-      <div className="relative group rounded-lg overflow-hidden">
-        <Image
-          src="https://images.unsplash.com/photo-1508672019048-805c876b67e2?auto=format&fit=crop&w=400&q=80"
-          alt="Coming Soon"
-          width={400}
-          height={400}
-          className="rounded-lg opacity-60 group-hover:scale-105 transition"
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <h3 className="text-white text-2xl font-bold">COMING SOON</h3>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
 {/* Customer Reviews Section */}
 <section className="bg-[#f8f8f8] py-12">
