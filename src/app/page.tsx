@@ -18,7 +18,8 @@ type Category = {
   id?: string;
   label: string;
   value: string;
-  image?: string; // Firestore에서 관리
+  image?: string;
+  order?: number; // 추가됨
 };
 
 export default function Home() {
@@ -39,16 +40,19 @@ export default function Home() {
     fetchProducts();
   }, []);
 
-  // 🔥 카테고리 Firestore에서 실시간 불러오기!
+  // 🔥 카테고리 Firestore에서 실시간 불러오기 (order 정렬 추가)
   useEffect(() => {
     async function fetchCategories() {
       const snapshot = await getDocs(collection(db, "categories"));
-      setCategories(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Category),
-        }))
-      );
+      const fetchedCategories = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Category),
+      }));
+
+      // 🔥 order 필드 기준 정렬 추가
+      fetchedCategories.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+      setCategories(fetchedCategories);
     }
     fetchCategories();
   }, []);
@@ -110,7 +114,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 카테고리별 쇼핑 섹션 (Firestore의 최신값으로 렌더링) */}
+      {/* 카테고리별 쇼핑 섹션 (정렬 적용됨) */}
       <section className="py-12">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-8">Shop our best sellers!</h2>
@@ -133,19 +137,6 @@ export default function Home() {
                 </Link>
               ))
             )}
-            {/* Coming Soon */}
-            <div className="relative group rounded-lg overflow-hidden">
-              <Image
-                src="https://images.unsplash.com/photo-1508672019048-805c876b67e2?auto=format&fit=crop&w=400&q=80"
-                alt="Coming Soon"
-                width={400}
-                height={400}
-                className="rounded-lg opacity-60 group-hover:scale-105 transition"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-                <h3 className="text-white text-2xl font-bold">COMING SOON</h3>
-              </div>
-            </div>
           </div>
         </div>
       </section>
