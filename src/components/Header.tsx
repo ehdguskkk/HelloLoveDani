@@ -22,11 +22,9 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         <div className="flex items-center justify-between py-3 md:py-5">
           {/* 왼쪽: 텍스트 로고 + 햄버거 */}
           <div className="flex items-center gap-3 min-w-[180px]">
-            {/* 텍스트 로고 */}
             <span className="text-xl font-bold text-white tracking-wide" style={{ letterSpacing: '0.02em' }}>
               HelloLoveDani
             </span>
-            {/* 햄버거 메뉴 */}
             <button
               onClick={onMenuClick}
               className="text-[var(--accent)] bg-transparent shadow-none hover:text-[var(--accent-light)] hover:bg-transparent transition focus:outline-none"
@@ -39,6 +37,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               </svg>
             </button>
           </div>
+
           {/* 중앙: 로고 (이미지) */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center select-none">
             <Link href="/" className="flex items-center gap-2">
@@ -50,17 +49,25 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               />
             </Link>
           </div>
+
           {/* 오른쪽: 아이콘들 */}
           <div className="flex items-center space-x-2 md:space-x-4 min-w-[72px] justify-end">
-            <Link href="/customer_authentication/redirect?locale=en&region_country=US"
-              className="text-[var(--accent)] bg-transparent shadow-none hover:text-[var(--accent-light)] hover:bg-transparent transition">
+            {/* 로그인 아이콘 링크 수정 */}
+            <Link
+              href="/login"
+              className="text-[var(--accent)] bg-transparent shadow-none hover:text-[var(--accent-light)] hover:bg-transparent transition"
+            >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </Link>
+
             {/* 카트 */}
-            <Link href="#" onClick={() => setCartOpen(true)}
-              className="relative text-[var(--accent)] bg-transparent shadow-none hover:text-[var(--accent-light)] hover:bg-transparent transition">
+            <Link
+              href="#"
+              onClick={() => setCartOpen(true)}
+              className="relative text-[var(--accent)] bg-transparent shadow-none hover:text-[var(--accent-light)] hover:bg-transparent transition"
+            >
               <svg
                 className="h-6 w-6"
                 fill="none"

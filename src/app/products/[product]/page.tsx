@@ -140,7 +140,6 @@ export default function ProductPage() {
       size: selectedSize,
       quantity,
     });
-    alert("장바구니에 담았습니다!");
   };
 
   // 🔥 추천 상품 Firestore에서 실시간 불러오기
