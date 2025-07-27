@@ -5,7 +5,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { Review } from './adminTypes';
 
 export default function ReviewAdmin() {
-// ----------- 5. 리뷰관리 -----------
+  // ----------- 5. 리뷰관리 -----------
   const [reviews, setReviews] = useState<Review[]>([]);
   useEffect(() => {
     getDocs(collection(db, "reviews")).then(snap =>
@@ -18,7 +18,7 @@ export default function ReviewAdmin() {
       <ul>
         {reviews.map(r => (
           <li key={r.id} className="mb-1 border-b pb-1">
-            <div>상품ID: {r.productId} | {r.user} | 평점: {r.rating} | {r.title}</div>
+            <div>상품ID: {r.productId} | {r.user} | 평점: {r.rating} {r.title ? `| ${r.title}` : ""}</div>
             <div>{r.content}</div>
             <div>{r.createdAt}</div>
           </li>

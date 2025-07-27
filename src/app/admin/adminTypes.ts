@@ -71,12 +71,13 @@ export type Qna = {
   createdAt: string;
 };
 
-// 리뷰 타입(예시)
+// 리뷰 타입 (Review)
 export type Review = {
   id: string;
   productId: string;
   user: string;
   rating: number;
-  comment: string;
+  content: string;      // content로 통일!
   createdAt: string;
+  title?: string;       // title2 → title로 수정, 필요없으면 삭제 가능
 };
