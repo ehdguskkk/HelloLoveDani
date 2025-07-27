@@ -1,5 +1,3 @@
-// src/app/admin/adminTypes.ts
-
 export const ADMIN_EMAIL = "sae4762@gmail.com";
 
 export const CATEGORY_OPTIONS = [
@@ -8,7 +6,7 @@ export const CATEGORY_OPTIONS = [
   { label: "Walk Set", value: "walk-set" },
 ];
 
-// 🔥 상품 타입
+// 🔥 상품(전체) 타입
 export type ProductOption = { color?: string; size?: string; stock?: number | string };
 export type Product = {
   id?: string;
@@ -24,17 +22,52 @@ export type Product = {
   color?: string;
   detail?: string;
   visible?: boolean;
-  
 };
 
-// 🔥 카테고리 타입
-export type Category = { id?: string; label: string; value: string; image?: string; order?: number; };
+// 주문에서 사용되는 상품 타입 (주문상품)
+export type OrderProduct = {
+  name: string;
+  qty: number;
+};
 
-// 🔥 배너 타입
-export type Banner = { id?: string; image: string; link: string; title: string; order: number; visible: boolean };
-// 주문
-export type Order = { id: string; products: Product[]; total: number; user: string; status: string; createdAt: string };
-// 리뷰
-export type Review = { id: string; productId: string; user: string; rating: number; title: string; content: string; createdAt: string };
-// QnA
-export type Qna = { id: string; productId: string; user: string; question: string; answer?: string; createdAt: string };
+// 주문 타입
+export type Order = {
+  id: string;
+  products: OrderProduct[]; // 주문에는 항상 OrderProduct!
+  total: number;
+  user: string;
+  status: string;
+  createdAt: string;
+  address?: string;
+  phone?: string;
+  receiver?: string;
+};
+
+// 카테고리 타입
+export type Category = {
+  id: string;
+  label: string;
+  value: string;
+  order: number;
+  image?: string;
+};
+
+// QnA 타입
+export type Qna = {
+  id: string;
+  productId: string;
+  user: string;
+  question: string;
+  answer?: string;
+  createdAt: string;
+};
+
+// 리뷰 타입(예시)
+export type Review = {
+  id: string;
+  productId: string;
+  user: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+};

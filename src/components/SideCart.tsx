@@ -1,29 +1,17 @@
 'use client';
 import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
-import Image from 'next/image'; // Next.js 이미지 최적화
+import { useEffect, useState } from 'react';
+import { db } from '@/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
-// 샘플 추천상품 (실제 구현 시 props나 API 등에서 가져올 수 있음)
-const recommended = [
-  {
-    id: 'rec1',
-    name: 'Sundae Funday Dog Collar',
-    price: 35,
-    image: 'https://ext.same-assets.com/1667191207/1597653608.jpeg',
-  },
-  {
-    id: 'rec2',
-    name: 'Island Time Dog Collar',
-    price: 35,
-    image: 'https://ext.same-assets.com/1667191207/2069186592.jpeg',
-  },
-  {
-    id: 'rec3',
-    name: 'Island Time Dog Bow Tie',
-    price: 20,
-    image: 'https://ext.same-assets.com/1667191207/3124710205.jpeg',
-  },
-];
+type Product = {
+  id: string;
+  name: string;
+  image: string;
+  price?: number;
+  options?: { price?: number };
+};
 
 export default function SideCart() {
   const { cart, isCartOpen, setCartOpen, updateQuantity, removeFromCart, addToCart } = useCart();
@@ -32,9 +20,19 @@ export default function SideCart() {
     (acc, item) => acc + Number(String(item.price).replace(/[^0-9.]/g, "")) * item.quantity, 0
   ).toFixed(2);
 
-  // 추천상품에서 이미 카트에 담긴 것은 제외
-  const filteredRecommended = recommended.filter(
-    rec => !cart.find(item => item.id === rec.id)
+  // Firestore에서 products 불러오기
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  useEffect(() => {
+    getDocs(collection(db, "products")).then(snap => {
+      const arr = snap.docs.map(d => ({ id: d.id, ...d.data() } as Product));
+      setAllProducts(arr);
+    });
+  }, []);
+
+  // 카트에 이미 담긴 상품 제외
+  const cartProductIds = cart.map(item => item.id);
+  const filteredRecommended = allProducts.filter(
+    p => !cartProductIds.includes(p.id)
   );
 
   return (
@@ -46,10 +44,10 @@ export default function SideCart() {
       />
       {/* 사이드 카트 */}
       <div className={`fixed top-0 right-0 w-[350px] h-full bg-white shadow-xl z-50 transform transition-transform duration-300 ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        {/* X 버튼: 항상 노출 */}
+        {/* X 버튼 */}
         <button
           onClick={() => setCartOpen(false)}
-          className="absolute top-4 right-4 text-2xl font-bold text-[var(--accent)] hover:text-black transition z-50"
+          className="absolute top-4 right-4 text-2xl font-bold text-black bg-white hover:text-black hover:bg-white transition z-50"
           aria-label="Close Cart"
         >✕</button>
         <h2 className="text-xl font-extrabold p-4 text-[#175943]">Your Cart</h2>
@@ -90,7 +88,7 @@ export default function SideCart() {
             ))
           )}
         </div>
-        {/* 추천상품 */}
+        {/* Firestore 상품 추천 */}
         {filteredRecommended.length > 0 && (
           <div className="p-4 bg-[#f7f3eb] border-t">
             <h3 className="font-bold text-[var(--accent)] text-sm mb-2 tracking-widest text-center">
@@ -102,11 +100,26 @@ export default function SideCart() {
                   <img src={item.image} alt={item.name} className="w-14 h-14 rounded shadow" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-[#175943] truncate text-sm">{item.name}</p>
-                    <p className="text-xs text-gray-500">${item.price}</p>
+                    <p className="text-xs text-gray-500">${item.options?.price ?? item.price}</p>
                   </div>
                   <button
                     className="bg-[#175943] hover:bg-[var(--accent)] text-white px-4 py-1 rounded text-xs font-bold"
-                    onClick={() => addToCart({ ...item, quantity: 1, size: 'M' })}
+                    onClick={() => {
+                      // Firestore 상품 → CartItem으로 변환
+                      const productPrice = typeof item.options?.price === 'number'
+                        ? item.options.price
+                        : typeof item.price === 'number'
+                          ? item.price
+                          : 0;
+                      addToCart({
+                        id: item.id,
+                        name: item.name,
+                        image: item.image,
+                        price: productPrice,
+                        quantity: 1,
+                        size: 'M',
+                      });
+                    }}
                   >
                     ADD
                   </button>

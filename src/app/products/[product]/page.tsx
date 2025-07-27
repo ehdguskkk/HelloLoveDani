@@ -4,10 +4,10 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase';
 
-// 🔥 상품 타입 선언
+// 상품 타입 선언
 type Product = {
   id?: string;
   name: string;
@@ -22,12 +22,15 @@ type Product = {
   detail?: string;
 };
 
-const sizes = ["XS", "S", "M", "L", "XL"];
+// 추천 상품 Firestore에서 불러오기용
+type SimpleProduct = {
+  id: string;
+  name: string;
+  price: number;
+  image?: string;
+};
 
-// 추천 상품 샘플 데이터 (임시)
-const recommended: Product[] = [
-  // ... (생략, 기존 그대로)
-];
+const sizes = ["XS", "S", "M", "L", "XL"];
 
 // 상세 정보 아코디언 데이터
 const accordionData: { title: string; content: string }[] = [
@@ -47,7 +50,7 @@ export default function ProductPage() {
   const params = useParams();
   const productId = params.product as string;
 
-  // 🔥 상품 데이터 타입 적용!
+  // 상품 데이터 타입 적용!
   const [productData, setProductData] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -140,6 +143,29 @@ export default function ProductPage() {
     alert("장바구니에 담았습니다!");
   };
 
+  // 🔥 추천 상품 Firestore에서 실시간 불러오기
+  const [recommendedProducts, setRecommendedProducts] = useState<SimpleProduct[]>([]);
+  useEffect(() => {
+    async function fetchRecommended() {
+      const querySnapshot = await getDocs(collection(db, "products"));
+      const products: SimpleProduct[] = [];
+      querySnapshot.forEach(docu => {
+        // 자기 자신은 추천에서 제외
+        if (docu.id !== productId) {
+          const data = docu.data();
+          products.push({
+            id: docu.id,
+            name: data.name,
+            price: data.price,
+            image: data.image,
+          });
+        }
+      });
+      setRecommendedProducts(products);
+    }
+    if (productId) fetchRecommended();
+  }, [productId]);
+
   if (loading) return <div className="p-10 text-2xl text-center">Loading...</div>;
   if (!productData) return <div className="p-10 text-2xl text-center">Not Found</div>;
 
@@ -153,7 +179,6 @@ export default function ProductPage() {
         {/* 왼쪽: 이미지 섹션 */}
         <div>
           <div className="mb-4">
-            {/* 1. mainImage가 있을 때만 Image 컴포넌트 렌더링 */}
             {mainImage ? (
               <Image
                 src={mainImage}
@@ -169,7 +194,6 @@ export default function ProductPage() {
               </div>
             )}
           </div>
-          {/* 썸네일 */}
           <div className="flex gap-3">
             {productImages.map((img: string, idx: number) => (
               <button
@@ -179,7 +203,6 @@ export default function ProductPage() {
                 style={{ width: 80, height: 80 }}
                 tabIndex={0}
               >
-                {/* 2. 썸네일도 src가 있을 때만 Image 렌더링 */}
                 {img ? (
                   <Image
                     src={img}
@@ -269,32 +292,40 @@ export default function ProductPage() {
         </div>
       </div>
 
-      {/* 추천 상품 */}
+      {/* 🔥 추천 상품 Firestore에서 실시간 표시 */}
       <div className="mt-16 px-2 md:px-0">
         <h2 className="text-3xl font-extrabold mb-8 text-center text-[var(--text-primary)]">You Might Also Like</h2>
         <div className="flex flex-wrap justify-center gap-8">
-          {recommended.map((item, idx) => (
-            <div key={idx} className="flex flex-col items-center w-40">
-              <div className="rounded-lg overflow-hidden shadow bg-white mb-2">
-                {/* 3. 추천 상품도 image가 있을 때만 Image 렌더링 */}
-                {item.image ? (
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    width={160}
-                    height={160}
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-40 h-40 flex items-center justify-center text-xs text-gray-400">No Image</div>
-                )}
+          {recommendedProducts.length === 0 ? (
+            <div className="text-center text-gray-400">No recommended products.</div>
+          ) : (
+            recommendedProducts.map((item, idx) => (
+              <div key={item.id || idx} className="flex flex-col items-center w-40">
+                <div className="rounded-lg overflow-hidden shadow bg-white mb-2">
+                  {item.image ? (
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      width={160}
+                      height={160}
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-40 h-40 flex items-center justify-center text-xs text-gray-400">No Image</div>
+                  )}
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-[var(--text-primary)]">{item.name}</div>
+                  <div className="text-lg text-gray-700">${item.price}</div>
+                </div>
+                <Link href={`/products/${item.id}`}>
+                  <button className="mt-2 px-4 py-2 bg-[#FFD600] rounded-full text-[var(--text-primary)] font-bold shadow hover:bg-[#FFF8E1]">
+                    View
+                  </button>
+                </Link>
               </div>
-              <div className="text-center">
-                <div className="font-bold text-[var(--text-primary)]">{item.name}</div>
-                <div className="text-lg text-gray-700">{item.price}</div>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 

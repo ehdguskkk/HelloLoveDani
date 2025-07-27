@@ -6,6 +6,7 @@ import Image from "next/image";
 import { db } from "@/firebase";
 import { collection, getDocs } from "firebase/firestore";
 
+
 type Product = {
   id: string;
   name: string;
