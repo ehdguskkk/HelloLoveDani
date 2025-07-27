@@ -5,7 +5,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase
 import { Banner } from './adminTypes';
 
 export default function BannerAdmin() {
-// ----------- 3. 배너 관리 -----------
+  // ----------- 3. 배너 관리 -----------
   const [banners, setBanners] = useState<Banner[]>([]);
   const [banner, setBanner] = useState<Banner>({ image: '', link: '', title: '', order: 1, visible: true });
   const [editId, setEditId] = useState<string | null>(null);
@@ -19,11 +19,13 @@ export default function BannerAdmin() {
 
   const handleAddOrUpdate = async () => {
     if (!banner.image || !banner.link || !banner.title) return alert('모든 필수 정보 입력!');
+    // Firestore에 저장시 id 필드는 빼고 저장 (Firestore가 자동생성)
+    const { id, ...bannerData } = banner;
     if (editId) {
-      await updateDoc(doc(db, "banners", editId), banner);
+      await updateDoc(doc(db, "banners", editId), bannerData as any);
       setEditId(null);
     } else {
-      await addDoc(collection(db, "banners"), banner);
+      await addDoc(collection(db, "banners"), bannerData as any);
     }
     setBanner({ image: '', link: '', title: '', order: 1, visible: true });
     fetchBanners();

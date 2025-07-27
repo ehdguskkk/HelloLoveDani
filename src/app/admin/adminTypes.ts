@@ -6,6 +6,15 @@ export const CATEGORY_OPTIONS = [
   { label: "Walk Set", value: "walk-set" },
 ];
 
+export interface Banner {
+  id?: string;        // Firestore에서 가져올 때 id가 붙음
+  image: string;      // 배너 이미지 URL
+  link: string;       // 클릭시 이동 링크
+  title: string;      // 배너 제목
+  order: number;      // 순서
+  visible: boolean;   // 노출 여부
+}
+
 // 🔥 상품(전체) 타입
 export type ProductOption = { color?: string; size?: string; stock?: number | string };
 export type Product = {
