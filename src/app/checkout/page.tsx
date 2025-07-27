@@ -1,7 +1,13 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import StripePaymentForm from "@/components/StripePaymentForm";
+
+// Stripe 초기화
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const AU_STATES = [
   { value: "", label: "State/Territory" },
@@ -39,15 +45,25 @@ const NZ_REGIONS = [
 export default function CheckoutPage() {
   const { cart } = useCart();
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
-  // 국가, 주/지역 상태
   const [country, setCountry] = useState("Australia");
   const [stateRegion, setStateRegion] = useState("");
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+
+  // PaymentIntent 생성
+  useEffect(() => {
+    fetch("/api/create-payment-intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: Math.round(subtotal * 100) || 5700 }), // 센트단위
+    })
+      .then(res => res.json())
+      .then(data => setClientSecret(data.clientSecret));
+  }, [subtotal]);
 
   return (
     <div className="min-h-screen bg-[#f9f7f3] flex items-center justify-center py-10">
       <div className="flex flex-col md:flex-row gap-10 w-full max-w-5xl">
-        {/* Checkout Form */}
+        {/* Checkout Form + Payment */}
         <div className="bg-white rounded-2xl shadow-xl p-10 flex-1 min-w-[350px]">
           <h2 className="text-3xl font-bold mb-8 text-center text-[#B99973] tracking-wider">Checkout</h2>
           <form className="space-y-7">
@@ -97,8 +113,24 @@ export default function CheckoutPage() {
                 <option>New Zealand</option>
               </select>
             </div>
-            <button className="w-full mt-4 bg-[#1C4636] hover:bg-[#222] text-white font-semibold text-lg py-3 rounded-lg shadow-lg transition">Continue to Payment</button>
           </form>
+
+          {/* Stripe 결제영역 - 영어로 고정 */}
+          <div className="mt-10">
+            {clientSecret ? (
+              <Elements
+                stripe={stripePromise}
+                options={{
+                  clientSecret,
+                  locale: "en", // Stripe PaymentElement 언어를 영어로 고정
+                }}
+              >
+                <StripePaymentForm />
+              </Elements>
+            ) : (
+              <div>Loading payment form...</div>
+            )}
+          </div>
         </div>
 
         {/* Order Summary */}
