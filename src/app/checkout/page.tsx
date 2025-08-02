@@ -42,6 +42,14 @@ const NZ_REGIONS = [
   { value: "West Coast", label: "West Coast" },
 ];
 
+// 1️⃣ 배송비 계산 함수
+function calcShipping(country: string, subtotal: number) {
+  if (subtotal >= 100) return 0;
+  if (country === "Australia") return 9;
+  if (country === "New Zealand") return 15;
+  return 20; // 기타국가
+}
+
 export default function CheckoutPage() {
   const { cart } = useCart();
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -49,24 +57,22 @@ export default function CheckoutPage() {
   const [stateRegion, setStateRegion] = useState("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
-  // PaymentIntent 생성
-  useEffect(() => {
-    console.log('현재 장바구니 금액 subtotal:', subtotal);
+  // 2️⃣ 배송비와 합계 계산
+  const shipping = calcShipping(country, subtotal);
+  const total = subtotal + shipping;
 
+  // 3️⃣ PaymentIntent 생성 (배송비까지 합산)
+  useEffect(() => {
+    if (cart.length === 0) return; // 카트 비었을 때는 요청X
+    const amount = Math.round(total * 100); // Stripe는 센트단위
     fetch("/api/create-payment-intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: Math.round(subtotal * 100) || 5700 }),
+      body: JSON.stringify({ amount }),
     })
       .then(res => res.json())
-      .then(data => {
-        console.log('API 응답:', data);
-        setClientSecret(data.clientSecret);
-      })
-      .catch((error) => {
-        console.error('API 호출 중 에러:', error);
-      });
-  }, [subtotal]);
+      .then(data => setClientSecret(data.clientSecret));
+  }, [subtotal, country, total, cart.length]);
 
   return (
     <div className="min-h-screen bg-[#f9f7f3] flex items-center justify-center py-10">
@@ -166,11 +172,11 @@ export default function CheckoutPage() {
           </div>
           <div className="flex justify-between pb-2 mb-2">
             <span>Shipping</span>
-            <span className="text-gray-400">Enter shipping address</span>
+            <span>{shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}</span>
           </div>
           <div className="flex justify-between items-center pt-4">
             <span className="font-bold text-lg">Total</span>
-            <span className="font-extrabold text-[#1C4636] text-2xl">AUD ${subtotal.toFixed(2)}</span>
+            <span className="font-extrabold text-[#1C4636] text-2xl">AUD ${total.toFixed(2)}</span>
           </div>
         </div>
       </div>
