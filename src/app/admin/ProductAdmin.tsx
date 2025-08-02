@@ -21,13 +21,12 @@ export default function ProductAdmin() {
   const [editId, setEditId] = useState<string | null>(null);
 
   // 카테고리 목록을 Firestore에서 가져오기
-  const [categories, setCategories] = useState<{label: string; value: string}[]>([]);
+  const [categories, setCategories] = useState<{ label: string; value: string }[]>([]);
 
   const fetchCategories = async () => {
     const snapshot = await getDocs(collection(db, 'categories'));
     setCategories(snapshot.docs.map(doc => {
       const data = doc.data();
-      // label/value 없는 값 방어 및 소문자 value로 변환
       return {
         label: (data.label || data.name || '').trim(),
         value: ((data.value || data.slug || '').trim()).toLowerCase(),
@@ -35,28 +34,18 @@ export default function ProductAdmin() {
     }));
   };
 
-  // 카테고리 콘솔 출력 (배열 확인)
-  useEffect(() => {
-    console.log("실시간 업데이트된 카테고리: ", categories);
-  }, [categories]);
-
-  // 검색/필터
-  const [search, setSearch] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
-
-  // CSV 업로드
-  const [csvProducts, setCsvProducts] = useState<Product[]>([]);
+  useEffect(() => { fetchCategories(); }, []);
 
   // 상품 목록 불러오기
   const fetchProducts = async () => {
     const snapshot = await getDocs(collection(db, 'products'));
-    setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
+    setProducts(snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Product)));
   };
 
-  useEffect(() => { 
-    fetchProducts(); 
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchProducts(); }, []);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
@@ -82,14 +71,27 @@ export default function ProductAdmin() {
     if (file) imageUrl = await uploadImage();
 
     const data: Product = {
-      name, price: Number(price), category, description: desc, image: imageUrl,
-      options, stock: stock === '' ? 0 : Number(stock), origin, detail, visible: true
+      id: editId || '', // firestore에선 id필드 저장 안함(불러올 때만 사용)
+      name,
+      price: Number(price) || 0,
+      category,
+      description: desc,
+      image: imageUrl,
+      options,
+      stock: stock === '' ? 0 : Number(stock),
+      origin,
+      detail,
+      visible: true,
     };
 
     if (editId) {
-      await updateDoc(doc(db, "products", editId), data);
+      const updateData = { ...data };
+      delete updateData.id; // Firestore에는 id필드 저장 X
+      await updateDoc(doc(db, "products", editId), updateData);
     } else {
-      await addDoc(collection(db, "products"), data);
+      const addData = { ...data };
+      delete addData.id;
+      await addDoc(collection(db, "products"), addData);
     }
     resetForm();
     fetchProducts();
@@ -129,6 +131,8 @@ export default function ProductAdmin() {
     fetchProducts();
   };
 
+  // CSV 업로드
+  const [csvProducts, setCsvProducts] = useState<Product[]>([]);
   const handleCsvChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -136,23 +140,38 @@ export default function ProductAdmin() {
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
       const rows = text.split('\n').map(r => r.split(','));
-      const newProducts: Product[] = rows.slice(1).map(row => ({
-        name: row[0], price: Number(row[1]), category: row[2], description: row[3], image: row[4], stock: Number(row[5]), origin: row[6], detail: row[7], visible: true
+      const newProducts: Product[] = rows.slice(1).map((row, i) => ({
+        id: '', // id는 firestore에서 자동생성
+        name: row[0] || '',
+        price: Number(row[1]) || 0,
+        category: row[2] || '',
+        description: row[3] || '',
+        image: row[4] || '',
+        stock: Number(row[5]) || 0,
+        origin: row[6] || '',
+        detail: row[7] || '',
+        visible: true,
       }));
       setCsvProducts(newProducts);
     };
     reader.readAsText(file);
   };
   const handleBulkUpload = async () => {
-    await Promise.all(csvProducts.map(data => addDoc(collection(db, "products"), data)));
+    await Promise.all(csvProducts.map(data => {
+      const addData = { ...data };
+      delete addData.id;
+      return addDoc(collection(db, "products"), addData);
+    }));
     setCsvProducts([]);
     fetchProducts();
   };
 
+  // 검색/필터
+  const [search, setSearch] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
   const filteredProducts = products
     .filter(p => (!search || p.name.toLowerCase().includes(search.toLowerCase())))
     .filter(p => (!filterCategory || p.category === filterCategory));
-
   const lowStock = products.filter(p => typeof p.stock === 'number' && p.stock <= 5);
 
   return (

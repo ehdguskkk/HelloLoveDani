@@ -51,13 +51,21 @@ export default function CheckoutPage() {
 
   // PaymentIntent 생성
   useEffect(() => {
+    console.log('현재 장바구니 금액 subtotal:', subtotal);
+
     fetch("/api/create-payment-intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: Math.round(subtotal * 100) || 5700 }), // 센트단위
+      body: JSON.stringify({ amount: Math.round(subtotal * 100) || 5700 }),
     })
       .then(res => res.json())
-      .then(data => setClientSecret(data.clientSecret));
+      .then(data => {
+        console.log('API 응답:', data);
+        setClientSecret(data.clientSecret);
+      })
+      .catch((error) => {
+        console.error('API 호출 중 에러:', error);
+      });
   }, [subtotal]);
 
   return (
