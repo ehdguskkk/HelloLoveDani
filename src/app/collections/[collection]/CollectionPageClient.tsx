@@ -6,7 +6,17 @@ import Link from 'next/link';
 import { collection as fbCollection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/firebase';
 
-type Product = {
+type FireProduct = {
+  name: string;
+  image?: string;
+  images?: string[];
+  price?: number;
+  basePrice?: number | null;
+  variants?: { price?: number }[];
+  category?: string;
+};
+
+type CardProduct = {
   id: string;
   name: string;
   price: number;
@@ -15,8 +25,21 @@ type Product = {
   category?: string;
 };
 
+function pickImage(p: FireProduct) {
+  return (Array.isArray(p.images) && p.images.length ? p.images[0] : p.image) || '';
+}
+
+function computePrice(p: FireProduct) {
+  if (Array.isArray(p.variants) && p.variants.length) {
+    return Math.min(...p.variants.map(v => Number(v.price || 0)));
+  }
+  if (typeof p.basePrice === 'number') return p.basePrice;
+  if (typeof p.price === 'number') return p.price;
+  return 0;
+}
+
 export default function CollectionPageClient({ collection }: { collection: string }) {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<CardProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,25 +47,23 @@ export default function CollectionPageClient({ collection }: { collection: strin
       setLoading(true);
       try {
         const col = decodeURIComponent(collection).toLowerCase();
-        const q = query(
-          fbCollection(db, 'products'),
-          where('category', '==', col)
-        );
+        const q = query(fbCollection(db, 'products'), where('category', '==', col));
         const querySnapshot = await getDocs(q);
-        const list: Product[] = [];
-        querySnapshot.forEach(doc => {
-          const data = doc.data();
-          list.push({
+
+        const list: CardProduct[] = querySnapshot.docs.map(doc => {
+          const data = doc.data() as FireProduct;
+          return {
             id: doc.id,
             name: data.name,
-            price: data.price,
-            image: data.image,
+            price: computePrice(data),
+            image: pickImage(data),
             href: `/products/${doc.id}`,
             category: data.category,
-          });
+          };
         });
+
         setProducts(list);
-      } catch (err) {
+      } catch {
         setProducts([]);
       }
       setLoading(false);
@@ -55,6 +76,7 @@ export default function CollectionPageClient({ collection }: { collection: strin
       <h1 className="text-4xl font-bold mb-8 capitalize">
         {decodeURIComponent(collection)}
       </h1>
+
       {loading ? (
         <div className="text-center py-20">Loading...</div>
       ) : (
@@ -75,7 +97,7 @@ export default function CollectionPageClient({ collection }: { collection: strin
                   alt={product.name}
                   width={533}
                   height={533}
-                  style={{ objectFit: 'contain' }}
+                  className="object-cover"
                 />
                 <div className="p-4">
                   <h3 className="font-bold text-lg mb-2">{product.name}</h3>
