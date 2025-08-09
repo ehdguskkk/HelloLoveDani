@@ -1,38 +1,91 @@
-import { supabase } from '@/lib/supabaseClient';
+'use client';
 
-// Next.js 14 이상에서는 async server component 사용 가능!
-export default async function AboutPage() {
-  // static_pages에서 type이 'about'인 row 불러오기
-  const { data, error } = await supabase
-    .from('static_pages')
-    .select('*')
-    .eq('type', 'about')
-    .single();
+import { useEffect, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/firebase';
 
-  if (error) {
+type AboutDoc = {
+  title?: string;
+  subtitle?: string;
+  content?: string;
+  imageUrl?: string;       // 관리자에서 저장한 키
+  image_url?: string;      // 혹시 예전 키로 저장된 경우 대비
+  align?: 'left' | 'center' | 'right';
+};
+
+export default function AboutPage() {
+  const [data, setData] = useState<AboutDoc | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db, 'pages', 'about'));
+        if (snap.exists()) {
+          setData(snap.data() as AboutDoc);
+        } else {
+          // 문서가 없을 때 기본값
+          setData({
+            title: 'About Us',
+            content:
+              'Welcome to HelloLoveDani!\n\nWe make premium handmade pet accessories.',
+            align: 'center',
+          });
+        }
+      } catch {
+        // 읽기 실패 시에도 기본값
+        setData({
+          title: 'About Us',
+          content:
+            'Welcome to HelloLoveDani!\n\nWe make premium handmade pet accessories.',
+          align: 'center',
+        });
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
     return (
-      <div className="max-w-3xl mx-auto py-12 px-6 text-red-500">
-        Failed to load About Us page. Please try again later.<br />
-        {error.message}
+      <div className="max-w-4xl mx-auto py-16 px-6 text-gray-400">
+        Loading…
       </div>
     );
   }
 
-  return (
-    <div className="max-w-3xl mx-auto py-12 px-6">
-      <h1 className="text-4xl font-bold text-[var(--accent)] mb-6">About Us</h1>
+  const title = data?.title ?? 'About Us';
+  const subtitle = data?.subtitle ?? '';
+  const content = data?.content ?? '';
+  const imageUrl = data?.imageUrl || data?.image_url || '';
+  const align = (data?.align || 'center') as 'left' | 'center' | 'right';
 
-      {data?.image_url && (
+  const alignWrap: Record<'left' | 'center' | 'right', string> = {
+    left: 'items-start text-left',
+    center: 'items-center text-center',
+    right: 'items-end text-right',
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto py-12 px-6 flex flex-col gap-6">
+      {imageUrl && (
         <img
-          src={data.image_url}
-          alt="About main"
-          className="w-56 h-56 object-cover rounded-2xl shadow-xl border-4 border-[var(--accent)] mb-8"
+          src={imageUrl}
+          alt={title}
+          className="w-full max-h-[360px] object-cover rounded-2xl shadow"
         />
       )}
 
-      <div className="text-lg mb-8 whitespace-pre-line">
-        {data?.content}
+      <div className={`flex flex-col ${alignWrap[align]}`}>
+        <h1 className="text-4xl font-extrabold mb-2">{title}</h1>
+        {subtitle && <p className="text-lg text-gray-500 mb-4">{subtitle}</p>}
       </div>
+
+      {content && (
+        <div className="prose prose-neutral max-w-none whitespace-pre-line">
+          {content}
+        </div>
+      )}
     </div>
   );
 }
